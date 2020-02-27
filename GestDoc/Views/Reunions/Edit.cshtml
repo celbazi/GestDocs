@@ -1,0 +1,44 @@
+﻿@model GestDoc.Models.Reunion
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Reunion</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <input type="hidden" asp-for="ID" />
+            <div class="form-group">
+                <label asp-for="DateReunion" class="control-label"></label>
+                <input asp-for="DateReunion" class="form-control" />
+                <span asp-validation-for="DateReunion" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Remarque" class="control-label"></label>
+                <input asp-for="Remarque" class="form-control" />
+                <span asp-validation-for="Remarque" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="TypeReunionID" class="control-label"></label>
+                <select asp-for="TypeReunionID" class="form-control" asp-items="ViewBag.TypeReunionID"></select>
+                <span asp-validation-for="TypeReunionID" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

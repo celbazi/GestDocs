@@ -75,9 +75,9 @@ namespace GestDoc.Data
 
         };
 
-            foreach (Document s in documents)
+            foreach (Participation s in participations)
             {
-                context.Documents.Add(s);
+                context.Participations.Add(s);
             }
             context.SaveChanges();
         }
