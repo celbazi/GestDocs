@@ -21,27 +21,37 @@
             <th>
                 @Html.DisplayNameFor(model => model.TypeReunion)
             </th>
+            <th> @Html.DisplayNameFor(model => model.Participants)</th>
             <th></th>
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.DateReunion)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Remarque)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TypeReunion.Libelle)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.DateReunion)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Remarque)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.TypeReunion.Libelle)
+                </td>
+                <td>
+                    @{
+                        foreach (var adherent in item.Participants)
+                        {
+                            @adherent.Adherent.Nom <br />
+                        }
+                    }
+                </td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.ID">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.ID">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.ID">Delete</a>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

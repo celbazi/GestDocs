@@ -29,9 +29,36 @@
                 <span asp-validation-for="TypeReunionID" class="text-danger"></span>
             </div>
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+                <div class="col-md-offset-2 col-md-10">
+                    <table>
+                        <tr>
+                            @{
+                                int cnt = 0;
+                                List<GestDoc.Models.ViewModels.ParticipantsAssignes> adherents = ViewBag.Adherents;
+
+                                foreach (var adherent in adherents)
+                                {
+                                    if (cnt++ % 3 == 0)
+                                    {
+                                    @:</tr><tr>
+                                    }
+                                    @:<td>
+                                        <input type="checkbox"
+                                               name="selectedAdherents"
+                                               value="@adherent.AdherentID"
+                                               @(Html.Raw(adherent.Assigned ? "checked=\"checked\"" : "")) />
+                                        @adherent.Nom
+                                    @:</td>
+                                }
+                            @:</tr>
+                            }
+                        </table>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <input type="submit" value="Save" class="btn btn-primary" />
+                </div>
+            </form>
     </div>
 </div>
 
