@@ -42,6 +42,9 @@ namespace GestDoc.Controllers
 
             var reunion = await _context.Reunions
                 .Include(r => r.TypeReunion)
+                .Include(r => r.Participants)
+                    .ThenInclude(r => r.Adherent)
+                .Include(r => r.Documents)
                 .FirstOrDefaultAsync(m => m.ID == id);
             if (reunion == null)
             {
@@ -72,7 +75,7 @@ namespace GestDoc.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,DateReunion,Remarque,TypeReunionID")] Reunion reunion, string[] selectedAdherents)
+        public async Task<IActionResult> Create([Bind("ID,DateReunion,Remarque,TypeReunionID")] Reunion reunion, string[] selectedAdherents, string[] files)
         {
             /*
             if (ModelState.IsValid)
@@ -93,8 +96,11 @@ namespace GestDoc.Controllers
                     reunion.Participants.Add(adherentToAdd);
                 }
                 reunion.Documents = new List<Document>();
-                var doc = new Document { ReunionID = reunion.ID, URL = "test" };
-                reunion.Documents.Add(doc);
+                foreach (var file in files)
+                {
+                    var documentToAdd = new Document { ReunionID = reunion.ID, URL = file };
+                    reunion.Documents.Add(documentToAdd);
+                }
             }
             if (ModelState.IsValid)
             {

@@ -9,6 +9,7 @@ namespace GestDoc.Models
     {
         public int ID { get; set; }
         public string URL { get; set; }
+        public byte[] Content { get; set; }
         public int ReunionID { get; set; }
         public Reunion Reunion { get; set; }
     }
