@@ -12,5 +12,6 @@ namespace GestDoc.Models
         public byte[] Content { get; set; }
         public int ReunionID { get; set; }
         public Reunion Reunion { get; set; }
+        public string MimeType { get; set; }
     }
 }

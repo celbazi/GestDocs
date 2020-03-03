@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using GestDoc.Data;
 using GestDoc.Models;
 using GestDoc.Models.ViewModels;
+using Microsoft.AspNetCore.Http;
+using System.IO;
 
 namespace GestDoc.Controllers
 {
@@ -75,7 +77,7 @@ namespace GestDoc.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ID,DateReunion,Remarque,TypeReunionID")] Reunion reunion, string[] selectedAdherents, string[] files)
+        public async Task<IActionResult> Create([Bind("ID,DateReunion,Remarque,TypeReunionID")] Reunion reunion, string[] selectedAdherents,  List<IFormFile> files)
         {
             /*
             if (ModelState.IsValid)
@@ -98,8 +100,24 @@ namespace GestDoc.Controllers
                 reunion.Documents = new List<Document>();
                 foreach (var file in files)
                 {
-                    var documentToAdd = new Document { ReunionID = reunion.ID, URL = file };
-                    reunion.Documents.Add(documentToAdd);
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        await file.CopyToAsync(memoryStream);
+                        
+                        // Upload the file if less than 2 MB
+                        if (memoryStream.Length < 2097152)
+                        {
+                            var documentToAdd = new Document { ReunionID = reunion.ID, URL = file.FileName,MimeType=file.ContentType, Content = memoryStream.ToArray() };
+                            reunion.Documents.Add(documentToAdd);
+
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("File", "The file is too large.");
+                        }
+                    }
+
+                    
                 }
             }
             if (ModelState.IsValid)
@@ -123,6 +141,7 @@ namespace GestDoc.Controllers
             var reunion = await _context.Reunions
                                     .Include(r => r.Participants)
                                     .ThenInclude(r => r.Adherent)
+                                    .Include(r => r.Documents)
                                     .FirstOrDefaultAsync(m => m.ID == id);
                 //.FindAsync(id);
                                         
@@ -140,35 +159,9 @@ namespace GestDoc.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ID,DateReunion,Remarque,TypeReunionID")] Reunion reunion, string[] selectedAdherents)
+        public async Task<IActionResult> Edit(int id, [Bind("ID,DateReunion,Remarque,TypeReunionID")] Reunion reunion, string[] selectedAdherents, List<IFormFile> files, string[] selectedDocuments)
         {
-            //if (id != reunion.ID)
-            //{
-            //    return NotFound();
-            //}
-
-            //if (ModelState.IsValid)
-            //{
-            //    try
-            //    {
-            //        _context.Update(reunion);
-            //        await _context.SaveChangesAsync();
-            //    }
-            //    catch (DbUpdateConcurrencyException)
-            //    {
-            //        if (!ReunionExists(reunion.ID))
-            //        {
-            //            return NotFound();
-            //        }
-            //        else
-            //        {
-            //            throw;
-            //        }
-            //    }
-            //    return RedirectToAction(nameof(Index));
-            //}
-            //ViewData["TypeReunionID"] = new SelectList(_context.TypeReunions, "ID", "Libelle", reunion.TypeReunionID);
-            //return View(reunion);
+          
             if (id == null)
             {
                 return NotFound();
@@ -177,6 +170,7 @@ namespace GestDoc.Controllers
             var reunionToUpdate = await _context.Reunions
                                     .Include(r => r.Participants)
                                     .ThenInclude(r => r.Adherent)
+                                    .Include(r => r.Documents)
                                     .FirstOrDefaultAsync(m => m.ID == id);
 
             if (await TryUpdateModelAsync<Reunion>(
@@ -189,6 +183,7 @@ namespace GestDoc.Controllers
                 //    reunionToUpdate.OfficeAssignment = null;
                 //}
                 UpdateReunionParticipants(selectedAdherents, reunionToUpdate);
+                UpdateReunionDocuments(selectedDocuments, reunionToUpdate,  files);
                 try
                 {
                     await _context.SaveChangesAsync();
@@ -288,6 +283,61 @@ namespace GestDoc.Controllers
                 }
             }
         }
+        private void UpdateReunionDocuments(string[] selectedDocuments, Reunion reunionToUpdate, List<IFormFile> files)
+        {
+            if (selectedDocuments == null)
+            {
+                reunionToUpdate.Documents = new List<Document>();
+              //  return;
+            }
 
+            var selectedDocumentHS = new HashSet<string>(selectedDocuments);
+            var reunionDocuments = new HashSet<int>
+                (reunionToUpdate.Documents.Select(c => c.ID));
+            foreach (var document in reunionDocuments)
+            {
+                if (!selectedDocumentHS.Contains(document.ToString()))
+                {
+                     Document documentToRemove = reunionToUpdate.Documents.FirstOrDefault(i => i.ID == document);
+                    _context.Remove(documentToRemove);
+                }
+               
+            }
+            foreach (var file in files)
+            {
+                using (var memoryStream = new MemoryStream())
+                {
+                     file.CopyToAsync(memoryStream);
+                    // Upload the file if less than 2 MB
+                    if (memoryStream.Length < 2097152)
+                    {
+                        var documentToAdd = new Document { ReunionID = reunionToUpdate.ID, URL = file.FileName, MimeType = file.ContentType, Content = memoryStream.ToArray() };
+                        reunionToUpdate.Documents.Add(documentToAdd);
+
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("File", "The file is too large.");
+                    }
+                }
+
+
+            }
+        }
+
+        public FileContentResult DownloadFile(int Id)
+        {
+                var download = _context.Documents.Where(d => d.ID == Id).FirstOrDefault();
+                if (download != null)
+                {
+                    string fileName = download.URL;
+                    return File(download.Content, download.MimeType, fileName);
+                }
+                else
+                {
+                    return null;
+                }
+            
+        }
     }
 }

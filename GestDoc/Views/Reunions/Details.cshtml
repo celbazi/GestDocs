@@ -46,8 +46,7 @@
             @{
                 foreach (var document in Model.Documents)
                 {
-                    
-                  <a href="@document.URL">@document.URL</a><br/>
+                    <a asp-action="DownloadFile" asp-route-id="@document.ID">@document.URL</a><br/>
                 }
             }
         </dd>
